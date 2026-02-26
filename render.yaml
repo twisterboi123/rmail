@@ -1,0 +1,39 @@
+# render.yaml – Render Blueprint
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: rmail-db
+    plan: free
+    databaseName: rmail
+    user: rmail
+
+services:
+  - type: web
+    name: rmail
+    runtime: node
+    plan: free
+    buildCommand: cd client && npm install && npm run build && cd ../server && npm install
+    startCommand: cd server && node src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: ADMIN_EMAIL
+        sync: false          # you'll set this manually
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DEFAULT_IMAP_HOST
+        sync: false
+      - key: DEFAULT_IMAP_PORT
+        value: "993"
+      - key: DEFAULT_SMTP_HOST
+        sync: false
+      - key: DEFAULT_SMTP_PORT
+        value: "465"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rmail-db
+          property: connectionString
