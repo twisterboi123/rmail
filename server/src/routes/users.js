@@ -12,7 +12,7 @@ const SALT_ROUNDS = 12;
 router.post('/', authenticate, requireAdmin, async (req, res, next) => {
   try {
     const {
-      email, password, display_name,
+      email, password, display_name, is_admin,
       imap_host, imap_port, smtp_host, smtp_port,
       mail_username, mail_password,
     } = req.body;
@@ -31,10 +31,10 @@ router.post('/', authenticate, requireAdmin, async (req, res, next) => {
 
     const { rows } = await pool.query(
       `INSERT INTO users
-         (email, password_hash, display_name, imap_host, imap_port, smtp_host, smtp_port, mail_username, mail_password)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         (email, password_hash, display_name, is_admin, imap_host, imap_port, smtp_host, smtp_port, mail_username, mail_password)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        RETURNING id, email, display_name, is_admin, created_at`,
-      [email, hash, display_name, imap_host || null, imap_port || 993, smtp_host || null, smtp_port || 465, mail_username || null, mail_password || null]
+      [email, hash, display_name, !!is_admin, imap_host || null, imap_port || 993, smtp_host || null, smtp_port || 465, mail_username || null, mail_password || null]
     );
 
     res.status(201).json(rows[0]);

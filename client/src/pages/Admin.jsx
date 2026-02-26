@@ -6,7 +6,7 @@ export default function Admin() {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ email: '', password: '', role: 'user' });
+  const [form, setForm] = useState({ email: '', password: '', display_name: '', is_admin: false });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +30,7 @@ export default function Admin() {
     setError('');
     try {
       await createUser(form);
-      setForm({ email: '', password: '', role: 'user' });
+      setForm({ email: '', password: '', display_name: '', is_admin: false });
       setShowCreate(false);
       fetchUsers();
     } catch (err) {
@@ -48,7 +48,7 @@ export default function Admin() {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (!user?.is_admin) {
     return (
       <div className="settings-page">
         <h1>Access Denied</h1>
@@ -98,15 +98,23 @@ export default function Admin() {
               </div>
             </div>
             <div className="form-group">
-              <label>Role</label>
-              <select
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                style={{ padding: '10px 12px', borderRadius: 4, border: '1px solid #dadce0', fontSize: 14, width: '100%' }}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label>Display Name</label>
+              <input
+                value={form.display_name}
+                onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                placeholder="Name"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={form.is_admin}
+                  onChange={(e) => setForm({ ...form, is_admin: e.target.checked })}
+                />
+                Admin
+              </label>
             </div>
             <button className="login-btn" style={{ marginTop: 8 }}>
               Create
@@ -135,18 +143,18 @@ export default function Admin() {
                   <td>
                     <span
                       style={{
-                        background: u.role === 'admin' ? '#e8f0fe' : '#f1f3f4',
-                        color: u.role === 'admin' ? '#1a73e8' : '#5f6368',
+                        background: u.is_admin ? '#e8f0fe' : '#f1f3f4',
+                        color: u.is_admin ? '#1a73e8' : '#5f6368',
                         padding: '2px 10px',
                         borderRadius: 12,
                         fontSize: 12,
                         fontWeight: 500,
                       }}
                     >
-                      {u.role}
+                      {u.is_admin ? 'admin' : 'user'}
                     </span>
                   </td>
-                  <td style={{ color: '#5f6368' }}>{u.mail_user || '—'}</td>
+                  <td style={{ color: '#5f6368' }}>{u.mail_username || '—'}</td>
                   <td>
                     {u.id !== user.id && (
                       <button

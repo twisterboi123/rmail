@@ -40,7 +40,40 @@ async function autoInit() {
       );
     `);
 
-    // Seed admin if not exists
+    // Seed default users if they don't exist yet
+    const seedUsers = [
+      {
+        email: 'twizip@rmail.ink',
+        password: 'Hasse2014!',
+        displayName: 'Twizip',
+        isAdmin: true,
+        mailUser: 'twizip@rmail.ink',
+      },
+      {
+        email: 'sour@rmail.ink',
+        password: '123Pasword!',
+        displayName: 'Sour',
+        isAdmin: false,
+        mailUser: 'sour@rmail.ink',
+      },
+    ];
+
+    for (const u of seedUsers) {
+      const existing = await client.query('SELECT id FROM users WHERE email = $1', [u.email]);
+      if (existing.rows.length === 0) {
+        const hash = await bcrypt.hash(u.password, SALT_ROUNDS);
+        await client.query(
+          `INSERT INTO users (email, password_hash, display_name, is_admin,
+            imap_host, imap_port, smtp_host, smtp_port, mail_username)
+           VALUES ($1, $2, $3, $4,
+            'mail.privateemail.com', 993, 'mail.privateemail.com', 465, $5)`,
+          [u.email, hash, u.displayName, u.isAdmin, u.mailUser]
+        );
+        console.log(`User created: ${u.email}`);
+      }
+    }
+
+    // Also support ADMIN_EMAIL env var for custom admin
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPass = process.env.ADMIN_PASSWORD;
     if (adminEmail && adminPass) {

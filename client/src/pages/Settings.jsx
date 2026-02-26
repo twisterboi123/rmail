@@ -24,7 +24,7 @@ export default function Settings() {
         imap_port: user.imap_port || f.imap_port,
         smtp_host: user.smtp_host || f.smtp_host,
         smtp_port: user.smtp_port || f.smtp_port,
-        mail_user: user.mail_user || '',
+        mail_user: user.mail_username || '',
         mail_pass: '',
       }));
     }
@@ -39,7 +39,14 @@ export default function Settings() {
     setStatus('');
     setSaving(true);
     try {
-      await updateMailSettings(user.id, form);
+      await updateMailSettings(user.id, {
+        imap_host: form.imap_host,
+        imap_port: form.imap_port,
+        smtp_host: form.smtp_host,
+        smtp_port: form.smtp_port,
+        mail_username: form.mail_user,
+        mail_password: form.mail_pass,
+      });
       setStatus('Settings saved!');
     } catch (err) {
       setStatus(err.message);
