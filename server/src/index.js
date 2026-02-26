@@ -44,4 +44,18 @@ app.use((err, _req, res, _next) => {
 
 // --------------- Start ---------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Rmail server running on port ${PORT}`));
+
+async function start() {
+  // Auto-initialise database tables & admin account on startup
+  try {
+    const initDb = require('./db/autoInit');
+    await initDb();
+    console.log('Database ready.');
+  } catch (err) {
+    console.error('DB init warning:', err.message);
+  }
+
+  app.listen(PORT, () => console.log(`Rmail server running on port ${PORT}`));
+}
+
+start();
