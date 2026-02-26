@@ -29,33 +29,32 @@ export default function Login() {
   return (
     <div className="login-wrapper">
       <div className="login-card">
-        <h1>Rmail</h1>
-        <p>Sign in to your email</p>
+        <div className="logo"><span><b>R</b>mail</span></div>
+        <h2>Sign in</h2>
+        <p className="subtitle">Use your Rmail account</p>
+
         {error && <div className="alert alert-error">{error}</div>}
+
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              autoFocus
-            />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+          <input
+            className="gmail-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+            autoFocus
+          />
+          <input
+            className="gmail-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+          />
+          <button className="login-btn" disabled={loading}>
+            {loading ? 'Signing in…' : 'Next'}
           </button>
         </form>
       </div>

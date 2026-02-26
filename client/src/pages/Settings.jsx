@@ -1,81 +1,143 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateMailSettings } from '../api';
 
 export default function Settings() {
   const { user } = useAuth();
+
   const [form, setForm] = useState({
-    imap_host: '',
-    imap_port: '993',
-    smtp_host: '',
-    smtp_port: '465',
-    mail_username: '',
-    mail_password: '',
+    imap_host: 'mail.privateemail.com',
+    imap_port: 993,
+    smtp_host: 'mail.privateemail.com',
+    smtp_port: 465,
+    mail_user: '',
+    mail_pass: '',
   });
+  const [status, setStatus] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
-  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  useEffect(() => {
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        imap_host: user.imap_host || f.imap_host,
+        imap_port: user.imap_port || f.imap_port,
+        smtp_host: user.smtp_host || f.smtp_host,
+        smtp_port: user.smtp_port || f.smtp_port,
+        mail_user: user.mail_user || '',
+        mail_pass: '',
+      }));
+    }
+  }, [user]);
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setStatus('');
     setSaving(true);
     try {
-      const payload = {
-        ...form,
-        imap_port: parseInt(form.imap_port, 10) || 993,
-        smtp_port: parseInt(form.smtp_port, 10) || 465,
-      };
-      await updateMailSettings(user.id, payload);
-      setSuccess('Mail settings updated!');
+      await updateMailSettings(user.id, form);
+      setStatus('Settings saved!');
     } catch (err) {
-      setError(err.message);
+      setStatus(err.message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div>
-      <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Mail Settings</h2>
-      <div className="card">
-        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 16 }}>
-          Configure your external mail server credentials. These are used to fetch and send emails via IMAP/SMTP.
+    <div className="settings-page">
+      <h1>Settings</h1>
+      <div className="settings-card">
+        <h3>Mail Server Configuration</h3>
+        <p style={{ color: '#5f6368', marginBottom: 16, fontSize: 14 }}>
+          Connect your <b>@rmail.ink</b> mailbox. Use Namecheap Private Email
+          credentials.
         </p>
-        {error && <div className="alert alert-error">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+
+        {status && (
+          <div
+            className={`alert ${
+              status.includes('saved') ? 'alert-success' : 'alert-error'
+            }`}
+          >
+            {status}
+          </div>
+        )}
+
+        <form onSubmit={handleSave}>
+          {/* Email credentials */}
+          <div className="form-row">
+            <div className="form-group">
+              <label>Email address</label>
+              <input
+                name="mail_user"
+                value={form.mail_user}
+                onChange={handleChange}
+                placeholder="you@rmail.ink"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input
+                name="mail_pass"
+                type="password"
+                value={form.mail_pass}
+                onChange={handleChange}
+                placeholder="Mail password"
+                required
+              />
+            </div>
+          </div>
+
+          {/* IMAP */}
+          <div className="form-row">
             <div className="form-group">
               <label>IMAP Host</label>
-              <input value={form.imap_host} onChange={set('imap_host')} placeholder="imap.example.com" />
+              <input
+                name="imap_host"
+                value={form.imap_host}
+                onChange={handleChange}
+              />
             </div>
             <div className="form-group">
               <label>IMAP Port</label>
-              <input value={form.imap_port} onChange={set('imap_port')} type="number" />
+              <input
+                name="imap_port"
+                type="number"
+                value={form.imap_port}
+                onChange={handleChange}
+              />
             </div>
+          </div>
+
+          {/* SMTP */}
+          <div className="form-row">
             <div className="form-group">
               <label>SMTP Host</label>
-              <input value={form.smtp_host} onChange={set('smtp_host')} placeholder="smtp.example.com" />
+              <input
+                name="smtp_host"
+                value={form.smtp_host}
+                onChange={handleChange}
+              />
             </div>
             <div className="form-group">
               <label>SMTP Port</label>
-              <input value={form.smtp_port} onChange={set('smtp_port')} type="number" />
+              <input
+                name="smtp_port"
+                type="number"
+                value={form.smtp_port}
+                onChange={handleChange}
+              />
             </div>
           </div>
-          <div className="form-group">
-            <label>Mail Username</label>
-            <input value={form.mail_username} onChange={set('mail_username')} placeholder="you@example.com" />
-          </div>
-          <div className="form-group">
-            <label>Mail Password</label>
-            <input type="password" value={form.mail_password} onChange={set('mail_password')} placeholder="••••••••" />
-          </div>
-          <button className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : 'Save Settings'}
+
+          <button className="login-btn" disabled={saving} style={{ marginTop: 8 }}>
+            {saving ? 'Saving…' : 'Save settings'}
           </button>
         </form>
       </div>

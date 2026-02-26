@@ -1,41 +1,69 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Header from './components/Header';
-import Login from './pages/Login';
+import TopBar from './components/TopBar';
+import Sidebar from './components/Sidebar';
+import ComposeModal from './components/ComposeModal';
 import Inbox from './pages/Inbox';
 import EmailView from './pages/EmailView';
-import Compose from './pages/Compose';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
+import Login from './pages/Login';
+import { getInbox } from './api';
 
-function ProtectedRoute({ children }) {
+function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="loading"><div className="spinner" /><br />Loading…</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  return children;
+  if (loading) return <div className="loading-screen">Loading…</div>;
+  return user ? children : <Navigate to="/login" />;
+}
+
+function AppLayout() {
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [emailCount, setEmailCount] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    getInbox(50)
+      .then((emails) => setEmailCount(emails.length))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <div className="app-layout">
+      <TopBar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      <div className="app-body">
+        <Sidebar
+          onCompose={() => setComposeOpen(true)}
+          emailCount={emailCount}
+        />
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<Inbox searchQuery={searchQuery} onCountChange={setEmailCount} />} />
+            <Route path="/email/:uid" element={<EmailView />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </main>
+      </div>
+      {composeOpen && <ComposeModal onClose={() => setComposeOpen(false)} />}
+    </div>
+  );
 }
 
 export default function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div className="loading"><div className="spinner" /><br />Loading…</div>;
-  }
-
   return (
-    <>
-      {user && <Header />}
-      <main className="container" style={{ paddingTop: user ? 24 : 0, paddingBottom: 32 }}>
-        <Routes>
-          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
-          <Route path="/email/:uid" element={<ProtectedRoute><EmailView /></ProtectedRoute>} />
-          <Route path="/compose" element={<ProtectedRoute><Compose /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-    </>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/*"
+        element={
+          <PrivateRoute>
+            <AppLayout />
+          </PrivateRoute>
+        }
+      />
+    </Routes>
   );
 }

@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEmail, toggleSpam } from '../api';
 
+function getInitial(name) {
+  if (!name) return '?';
+  const match = name.match(/^"?([^"<]+)"?\s*</);
+  const display = match ? match[1].trim() : name.split('@')[0];
+  return display[0]?.toUpperCase() || '?';
+}
+
+function extractName(from) {
+  if (!from) return '';
+  const match = from.match(/^"?([^"<]+)"?\s*</);
+  return match ? match[1].trim() : from;
+}
+
+const COLORS = ['#1a73e8', '#ea4335', '#34a853', '#fbbc04', '#8430ce', '#e8710a', '#137333'];
+function avatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return COLORS[Math.abs(hash) % COLORS.length];
+}
+
 export default function EmailView() {
   const { uid } = useParams();
   const navigate = useNavigate();
@@ -21,61 +41,80 @@ export default function EmailView() {
     try {
       const result = await toggleSpam(uid);
       setEmail((prev) => ({ ...prev, spam: result.spam }));
-    } catch {
-      // Ignore
-    }
+    } catch { /* ignore */ }
   };
 
   if (loading) {
-    return <div className="loading"><div className="spinner" /><br />Loading email…</div>;
+    return <div className="loading"><div className="spinner" /><br />Loading…</div>;
   }
 
   if (error) {
     return (
-      <div>
+      <div style={{ padding: 24 }}>
         <div className="alert alert-error">{error}</div>
-        <button className="btn btn-outline" onClick={() => navigate('/')}>Back to Inbox</button>
+        <button className="btn btn-outline" onClick={() => navigate('/')}>← Back to Inbox</button>
       </div>
     );
   }
 
+  const senderName = extractName(email.from);
+  const initial = getInitial(email.from);
+  const color = avatarColor(email.from);
+
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button className="btn btn-outline btn-sm" onClick={() => navigate('/')}>← Back</button>
-        <button className="btn btn-outline btn-sm" onClick={handleSpam}>
-          {email.spam ? 'Unmark Spam' : 'Mark as Spam'}
+    <div className="email-detail-wrapper">
+      {/* Toolbar */}
+      <div className="email-detail-toolbar">
+        <button className="toolbar-btn" onClick={() => navigate('/')} title="Back to inbox">←</button>
+        <button className="toolbar-btn" title="Archive">📦</button>
+        <button className="toolbar-btn" onClick={handleSpam} title={email.spam ? 'Not spam' : 'Report spam'}>
+          {email.spam ? '✓' : '⚠'}
         </button>
-        {email.spam && <span className="email-spam-badge" style={{ alignSelf: 'center' }}>Spam</span>}
+        <button className="toolbar-btn" title="Delete">🗑</button>
       </div>
 
-      <div className="email-detail">
-        <h2>{email.subject}</h2>
-        <div className="email-meta">
-          <div><strong>From:</strong> {email.from}</div>
-          <div><strong>To:</strong> {email.to}</div>
-          {email.cc && <div><strong>Cc:</strong> {email.cc}</div>}
-          <div><strong>Date:</strong> {email.date ? new Date(email.date).toLocaleString() : 'Unknown'}</div>
+      {/* Subject */}
+      <div className="email-detail-subject">
+        {email.subject}
+        {email.spam && <span className="label-chip" style={{ background: '#fce8e6', color: '#d93025' }}>Spam</span>}
+        <span className="label-chip">Inbox</span>
+      </div>
+
+      {/* Message Card */}
+      <div className="email-message-card">
+        <div className="email-message-header">
+          <div className="sender-avatar" style={{ background: color }}>
+            {initial}
+          </div>
+          <div className="sender-info">
+            <div className="sender-name">
+              {senderName}
+              <span className="sender-email-tag">&lt;{email.from}&gt;</span>
+            </div>
+            <div className="sender-to">to {email.to}{email.cc ? `, cc: ${email.cc}` : ''}</div>
+          </div>
+          <div className="message-date">
+            {email.date ? new Date(email.date).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+          </div>
         </div>
 
+        {/* Attachments */}
         {email.attachments?.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <strong style={{ fontSize: 13 }}>Attachments:</strong>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-              {email.attachments.map((a, i) => (
-                <span key={i} className="btn btn-outline btn-sm">
-                  📎 {a.filename} ({Math.round(a.size / 1024)}KB)
-                </span>
-              ))}
-            </div>
+          <div className="email-attachments">
+            {email.attachments.map((a, i) => (
+              <span key={i} className="attachment-chip">
+                📎 {a.filename} ({Math.round(a.size / 1024)}KB)
+              </span>
+            ))}
           </div>
         )}
 
-        <div className="email-body">
+        {/* Body */}
+        <div className="email-message-body">
           {email.html ? (
             <div dangerouslySetInnerHTML={{ __html: email.html }} />
           ) : (
-            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>{email.text}</pre>
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{email.text}</pre>
           )}
         </div>
       </div>
