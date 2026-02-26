@@ -96,16 +96,3 @@ export default function Settings() {
     </div>
   );
 }
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <button className="login-btn" disabled={saving} style={{ marginTop: 8 }}>
-            {saving ? 'Saving…' : 'Save settings'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
