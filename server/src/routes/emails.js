@@ -23,8 +23,8 @@ router.get('/inbox', async (req, res, next) => {
   try {
     const user = await getFullUser(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    if (!user.mail_password) {
-      return res.status(400).json({ error: 'Mail credentials not configured. Update your mail settings.' });
+    if (!user.mail_username || !user.mail_password) {
+      return res.status(400).json({ error: 'Mail credentials not configured. Go to Settings and enter your email address and mail password.' });
     }
 
     const limit = Math.min(parseInt(req.query.limit, 10) || 30, 100);

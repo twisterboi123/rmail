@@ -80,7 +80,14 @@ function fetchInbox(user, limit = 30) {
       });
     });
 
-    imap.once('error', reject);
+    imap.once('error', (err) => {
+      const msg = err.message || String(err);
+      if (msg.includes('Invalid credentials') || msg.includes('AUTHENTICATIONFAILED') || msg.includes('Login failed')) {
+        reject(new Error('Mail login failed. Check your email address and mail password in Settings.'));
+      } else {
+        reject(err);
+      }
+    });
     imap.once('end', () => {
       // Sort newest first
       messages.sort((a, b) => new Date(b.date) - new Date(a.date));
