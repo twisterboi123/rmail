@@ -12,7 +12,7 @@ services:
     name: rmail
     runtime: node
     plan: free
-    buildCommand: cd client && npm install && npm run build && cd ../server && npm install
+    buildCommand: cd client && npm install --include=dev && npm run build && cd ../server && npm install
     startCommand: cd server && node src/index.js
     envVars:
       - key: NODE_ENV

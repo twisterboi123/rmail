@@ -207,7 +207,7 @@ git push -u origin main
 | ------------------ | ---------------------------------------------------------------------------- |
 | **Name**           | `rmail`                                                                      |
 | **Runtime**        | Node                                                                         |
-| **Build Command**  | `cd client && npm install && npm run build && cd ../server && npm install`    |
+| **Build Command**  | `cd client && npm install --include=dev && npm run build && cd ../server && npm install` |
 | **Start Command**  | `cd server && node src/index.js`                                             |
 | **Plan**           | Free                                                                         |
 
